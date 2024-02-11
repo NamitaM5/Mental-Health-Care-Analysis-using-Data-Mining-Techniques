@@ -1,0 +1,306 @@
+```{r} library(readxl) library(dplyr) library(tidyverse)
+# Load Data
+data <- read.csv("mental-heath-in-tech-2016_20161114.csv") head(data)
+```
+```{r Renaming Columns} #Rename Columns
+colnames(data)[1]<-"self_employed" colnames(data)[2]<-"no_of_employees" colnames(data)[3]<-"tech_company" colnames(data)[5]<-"offer_benefits" colnames(data)[6]<-"care_available" colnames(data)[7]<-"wellness_campaign" colnames(data)[8]<-"offer_help" colnames(data)[9]<-"anonymity_protected" colnames(data)[11]<-"mental_health_consequence" colnames(data)[12]<-"phy_health_consequence" colnames(data)[13]<-"discuss_coworkers" colnames(data)[14]<-"discuss_supervisor" colnames(data)[15]<-"mental_vs_physical" colnames(data)[16]<-"obs_consequence" colnames(data)[37]<-"phy_health_interview" colnames(data)[39]<-"mental_health_interview" colnames(data)[46]<-"family_history" colnames(data)[48]<-"have_mhd" colnames(data)[53]<-"sought_treatment" colnames(data)[56]<-"age" colnames(data)[57]<-"gender" colnames(data)[60]<-"country" colnames(data)[63]<-"remote_work"
+```
+```{r}
+#Data Cleaning
+#Removing employees who are self Employeed
+IE 7275 Data Mining in Engineering
+data1 <- data
+data1 <- data1 %>%
+filter(self_employed == 0)
+#Removing employees who are not working in tech organization data1 <- data1 %>%
+filter(tech_company == 1)
+#Drop empty and irrelevant columns empty_columns = c(
+"Do.you.know.local.or.online.resources.to.seek.help.for.a.mental.health.disorder.",
+"If.you.have.been.diagnosed.or.treated.for.a.mental.health.disorder..do.you.ever.reveal.this.to.cli ents.or.business.contacts.",
+"If.you.have.revealed.a.mental.health.issue.to.a.coworker.or.employee..do.you.believe.this.has.i mpacted.you.negatively.",
+"If.you.have.been.diagnosed.or.treated.for.a.mental.health.disorder..do.you.ever.reveal.this.to.co workers.or.employees.",
+"If.you.have.revealed.a.mental.health.issue.to.a.client.or.business.contact..do.you.believe.this.has .impacted.you.negatively.",
+"Do.you.believe.your.productivity.is.ever.affected.by.a.mental.health.issue.",
+"If.yes..what.percentage.of.your.work.time..time.performing.primary.or.secondary.job.functions. .is.affected.by.a.mental.health.issue.",
+"Do.you.have.medical.coverage..private.insurance.or.state.provided..which.includes.treatment.of ..mental.health.issues.")
+irrelevent_columns = c("self_employed", "What.US.state.or.territory.do.you.live.in.",
+"What.US.state.or.territory.do.you.work.in.", "What.country.do.you.live.in.", "Why.or.why.not..1",
+"Why.or.why.not.")
+data2 = data1
+data2 <- data2 %>% select(-irrelevent_columns, -empty_columns)
+```
+```{r Male/Female/Others}
+#Data preprocessing
+data2$gender <- data2$gender %>% str_to_lower()
+IE 7275 Data Mining in Engineering
+
+male <- c("male", "m", "male-ish", "maile", "mal", "male (cis)", "make", "male ", "man","msle", "mail", "malr","cis man", "cis male", "male.", "sex is male", "i'm a man why didn't you make this a drop down question. you should of asked sex? and i would of answered yes please. seriously how much text can this take? ", "m|", "cisdude")
+female <- c("cis female", "cis female ", "f", "female", "woman", "femake", "female ","cis- female/femme", "female (cis)", "femail","i identify as female.", "fm", "female/woman", "cisgender female", "fem", "female (props for making this a freeform field, though)", " female", "cis-woman", " f", "female assigned at birth ")
+others <- c("trans-female", "something kinda male?", "queer/she/they", "non-binary","nah", "all", "enby", "fluid", "genderqueer", "androgyne", "agender", "male leaning androgynous", "guy (-ish) ^_^", "trans woman", "neuter", "female (trans)", "queer", "ostensibly male, unsure what that really means", "bigender", "transitioned, m2f", "genderfluid (born female)", "other/transfeminine", "female or multi-gender femme", "androgynous", "male 9:1 female, roughly", "other", "nb masculine", "genderfluid", "genderqueer woman", "mtf", "male/genderqueer", "nonbinary", "unicorn", "male (trans, ftm)", "transgender woman", "female- bodied; no feelings about gender", "genderflux demi-girl", "afab" )
+data2$gender <- sapply(as.vector(data2$gender), function(x) if(x %in% male) "male" else if (x %in% female) "female" else if (x %in% others) "others" )
+# Modifying data
+data2<-data2[!data2$care_available%in%c("N/A","" ),] data2$care_available<-as.factor(as.character(data2$care_available)) levels(data2$care_available)[levels(data2$care_available)=="I am not sure"]<-"Not sure"
+data2<-data2[!data2$no_of_employees%in%c(""),] data2$no_of_employees<-as.factor(as.character(data2$no_of_employees)) levels(data2$no_of_employees)[levels(data2$no_of_employees)=="More than 1000"]<-">1000"
+data2<-data2[!data2$anonymity_protected%in%c(""),] data2$anonymity_protected<-as.factor(as.character(data2$anonymity_protected))
+data2<-data2[!data2$mental_vs_physical%in%c(""),] data2$mental_vs_physical<-as.factor(as.character(data2$mental_vs_physical))
+data2<-data2[!data2$mental_health_consequence%in%c(""),] data2$mental_health_consequence<-as.factor(as.character(data2$mental_health_consequence))
+data2<-data2[!data2$offer_benefits%in%c("","Not eligible for coverage / N/A"),] data2$offer_benefits<-as.factor(as.character(data2$offer_benefits))
+IE 7275 Data Mining in Engineering
+
+```
+```{r train test}
+# drop NA values
+data3 <- data2 %>% select(-Is.your.primary.role.within.your.company.related.to.tech.IT.) data3 <- data3 %>% drop_na()
+nrow(data3)
+#Data Split to train : 80%
+set.seed(2)
+train.index <- sample(c(1:dim(data3)[1]), dim(data3)[1]*0.8) train.df <- data3[train.index, ]
+test.df <- data3[-train.index, ]
+```
+Number of rows after data cleaning and preprocessing = 750 data loss = (1433-749)/1433 = 0.477 = 47%
+Therefore, we lost 47% of unnecessary data after preprocessing.
+```{r Data Visulizations}
+# Barplot for Popular top 10 Mental Health disorders vs Frequency
+# Separate Multiple disorders which are seperated by "|"
+data_disorder = data3 #unique(data_disorder$If.yes..what.condition.s..have.you.been.diagnosed.with.)
+temp1 = data_disorder %>% separate(If.yes..what.condition.s..have.you.been.diagnosed.with., sep = '\\|', c('mhdisorder_1', 'mhdisorder_2', 'mhdisorder_3', 'mhdisorder_4', 'mhdisorder_5', 'mhdisorder_6', 'mhdisorder_7', 'mhdisorder_8', 'mhdisorder_9'), fill = 'right')
+temp2 = temp1 %>%
+select(matches('mhdisorder_[1-9]')) %>% mutate_all(.funs = 'as.factor')
+temp2 %>% select(matches('mhdisorder_[1-9]')) %>% str()
+# Column bind the new generated columns to the data_disorder data_disorder = cbind(data_disorder, temp2)
+# Consider only the disorder name before "("
+temp1 = table(data_disorder$mhdisorder_1)
+data_disorder$mhdisorder_1 = factor(data_disorder$mhdisorder_1, levels = names(temp1[order(temp1, decreasing = TRUE)]))
+levels(data_disorder$mhdisorder_1) = sapply(strsplit(levels(data_disorder$mhdisorder_1), split = "\\("), `[`, 1)
+IE 7275 Data Mining in Engineering
+
+#Popular Diagnosis
+v1 <- data_disorder %>%
+select(have_mhd,mhdisorder_1) %>% filter(have_mhd == "Yes") %>% group_by(mhdisorder_1) %>% dplyr::summarise(count=n()) %>% arrange(desc(count)) %>%
+top_n(5)
+# Drop NA Values
+v1 <- v1 %>% drop_na()
+#Remove irrelevent record
+v1 = subset(v1, mhdisorder_1 != "I haven\'t been formally diagnosed, so I felt uncomfortable answering, but Social Anxiety and Depression.")
+#v1 <- data %>% #
+select(Do.you.currently.have.a.mental.health.disorder.,If.yes..what.condition.s..have.you.been.di agnosed.with.) %>%
+#filter(Do.you.currently.have.a.mental.health.disorder. == "Yes") %>% #group_by(If.yes..what.condition.s..have.you.been.diagnosed.with.) %>% #summarise(count=n()) %>%
+#arrange(desc(count)) %>%
+#top_n(10)
+# Barplot
+ggplot(v1, aes(reorder(mhdisorder_1,count), count)) + geom_col(fill = 'pink') + coord_flip() + labs(y="Count",x="Diagnosed Conditions", title = "Popular Diagnosis for people with mental disorders") + theme_minimal()
+```
+```{r Data Visualization with Gender}
+library(ggplot2)
+data_disorder = data3
+data_disorder$gender <- data_disorder$gender %>% str_to_lower()
+data_disorder = filter(data_disorder, gender != "NULL") data_disorder$gender <- as.factor(unlist(data_disorder$gender))
+# Barplot for diagnozed employees by gender ggplot(data_disorder, aes(x = have_mhd)) +
+geom_bar(aes(fill = gender), position = "dodge") +
+theme(legend.position = "top") + theme_minimal() + labs(x="Mental Health Disorder", title = "Mental Health disorder count by Gender")
+#unique(data_disorder$have_mhd)
+IE 7275 Data Mining in Engineering
+
+```
+```{r}
+# Count of population who work in tech companies
+library (plyr)
+percentage_of_male_female <- data_disorder%>%
+filter(tech_company == 1) %>% group_by(gender)%>% dplyr::summarize(number=n())%>% mutate(percent=signif(number/sum(number),3))
+percentage_of_male_female
+ggplot(percentage_of_male_female, aes(x=reorder(gender,-number),y = number, alpha = 0.6)) + geom_col(fill = "red", width = 0.5) +
+#theme(legend.position = "top")
+theme_minimal() + labs(x="Gender", title = "Count of Employes by Gender" ) +
+theme(legend.position="none")
+```
+Male popultion is more in tech industry than femal population.
+```{r}
+# World map for Number of tech employes working in Country
+library(googleVis)
+Countries_data <- data.frame(table(data_disorder$country)) Countries_data <- Countries_data %>%
+arrange(desc(Freq)) Countries_data
+geoMap <- gvisGeoChart(Countries_data,locationvar="Var1",colorvar="Freq", options=list(dataMode="regions"))
+plot(geoMap)
+```
+Majority of Employes working in USA, UK, Canada & Germany seem to be taking part in Tech Organizations.
+Therefore, it can be considered, mental health is given importaance in these Countries.
+```{r}
+#sought treatment vs other parameters library(gridExtra)
+p1<-ggplot(data_disorder, aes(x=family_history,fill = as.factor(sought_treatment))) +
+IE 7275 Data Mining in Engineering
+
+geom_bar(aes(group = as.factor(sought_treatment)), position = "dodge") + guides(fill=guide_legend(title="Sought Medical Treatment?"))+ labs(x="Family History of Mental Illness?") + theme_minimal()
+data_disorder$Do.you.feel.that.being.identified.as.a.person.with.a.mental.health.issue.would.hurt .your.career.<- as.factor(as.character(data_disorder$Do.you.feel.that.being.identified.as.a.person.with.a.mental.h ealth.issue.would.hurt.your.career.)) levels(data_disorder$Do.you.feel.that.being.identified.as.a.person.with.a.mental.health.issue.wou ld.hurt.your.career.)[levels(data_disorder$Do.you.feel.that.being.identified.as.a.person.with.a.me ntal.health.issue.would.hurt.your.career.)=="Yes, it has"]<-"Yes"
+levels(data_disorder$Do.you.feel.that.being.identified.as.a.person.with.a.mental.health.issue.wou ld.hurt.your.career.)[levels(data_disorder$Do.you.feel.that.being.identified.as.a.person.with.a.me ntal.health.issue.would.hurt.your.career.)=="Yes, I think it would"]<-"Yes"
+levels(data_disorder$Do.you.feel.that.being.identified.as.a.person.with.a.mental.health.issue.wou ld.hurt.your.career.)[levels(data_disorder$Do.you.feel.that.being.identified.as.a.person.with.a.me ntal.health.issue.would.hurt.your.career.)=="No, it has not"]<-"No"
+levels(data_disorder$Do.you.feel.that.being.identified.as.a.person.with.a.mental.health.issue.wou ld.hurt.your.career.)[levels(data_disorder$Do.you.feel.that.being.identified.as.a.person.with.a.me ntal.health.issue.would.hurt.your.career.)=="No, I don't think it would"]<-"No"
+p2<-ggplot(data_disorder, aes(x=Do.you.feel.that.being.identified.as.a.person.with.a.mental.health.issue.would.hurt.your.ca reer.,fill = as.factor(sought_treatment))) +
+geom_bar(aes(group = as.factor(sought_treatment)), position = "dodge") + guides(fill=guide_legend(title="Sought Medical Treatment?"))+ labs(x="Does mental health hurt your career?") + theme_minimal()
+p3<- ggplot(data_disorder,aes(x=offer_benefits,fill = as.factor(sought_treatment))) + geom_bar(aes(group = as.factor(sought_treatment)), position = "dodge") + guides(fill=guide_legend(title="Sought Medical Treatment?"))+ labs(x="Healthcare Covergae provided?") + theme_minimal()
+p4<-ggplot(data_disorder, aes(x=How.willing.would.you.be.to.share.with.friends.and.family.that.you.have.a.mental.illness., fill = as.factor(sought_treatment))) + geom_bar(aes(group = as.factor(sought_treatment)), position = "dodge") + guides(fill=guide_legend(title="Sought Medical Treatment?"))+ labs(x="Willing to share with friends and family?") + theme_minimal() + theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1))
+grid.arrange(p1,p2,p3,p4, ncol=2, top = "How many have sought Medical Treatment based on different parameters?")
+IE 7275 Data Mining in Engineering
+
+```
+```{r KNN} library(caret) library(class) library(forecast)
+# Lets consider the respones variable for KNN classification as sought_treatment and the other variables are the predictor variables.
+gender <- data3$gender
+data3 <- data3[,-c(45)] data3$gender<-(unlist(gender))
+data4 <- data3
+set.seed(2)
+train.index <- sample(c(1:dim(data4)[1]), dim(data4)[1]*0.8) train.df <- data4[train.index, ]
+test.df <- data4[-train.index, ]
+#KNN Regression
+data.knn_1 <- knnreg(sought_treatment~age, train.df, k = 1) data.knn_3 <- knnreg(sought_treatment~age, train.df, k = 3) data.knn_7 <- knnreg(sought_treatment~age, train.df, k = 7) data.knn_9 <- knnreg(sought_treatment~age, train.df, k = 9) data.knn_1
+data.knn.pred_1 <- predict(data.knn_1, test.df)
+data.knn_3
+data.knn.pred_3 <- predict(data.knn_3, test.df)
+data.knn_7
+data.knn.pred_7 <- predict(data.knn_7, test.df)
+data.knn_9
+data.knn.pred_9 <- predict(data.knn_9, test.df)
+data.knn.pred_1 data.knn.pred_3 data.knn.pred_7 data.knn.pred_9
+#to find accuracy
+#
+accuracy(test.df$sought_treatment, data.knn.pred_9) #
+cor(test.df$sought_treatment, data.knn.pred_9)
+IE 7275 Data Mining in Engineering
+
+#Standardising
+data4$age <- (data4$age - mean(data4$age))/sd(data4$age) #
+train.index <- sample(c(1:dim(data4)[1]), dim(data4)[1]*0.8) train.df <- data4[train.index, ]
+test.df <- data4[-train.index, ]
+standardised.data.knn_1 <- knnreg(sought_treatment~age, train.df, k = 1) standardised.data.knn_3 <- knnreg(sought_treatment~age, train.df, k = 3) standardised.data.knn_7 <- knnreg(sought_treatment~age, train.df, k = 7) standardised.data.knn_9 <- knnreg(sought_treatment~age, train.df, k = 9)
+#
+standardised.data.knn.pred_1 <- predict(standardised.data.knn_1, test.df) standardised.data.knn.pred_3 <- predict(standardised.data.knn_3, test.df) standardised.data.knn.pred_7 <- predict(standardised.data.knn_7, test.df) standardised.data.knn.pred_9 <- predict(standardised.data.knn_9, test.df)
+#Finding accuracy after standardizing the parameter:age accuracy(test.df$sought_treatment, standardised.data.knn.pred_1) accuracy(test.df$sought_treatment, standardised.data.knn.pred_3) accuracy(test.df$sought_treatment, standardised.data.knn.pred_7) accuracy(test.df$sought_treatment, standardised.data.knn.pred_9)
+#
+paste("Correlation coefficient for k=1 is:" ,cor(test.df$sought_treatment, standardised.data.knn.pred_1))
+paste("Correlation coefficient for k=3 is:" ,cor(test.df$sought_treatment, standardised.data.knn.pred_3))
+paste("Correlation coefficient for k=7 is:" ,cor(test.df$sought_treatment, standardised.data.knn.pred_7))
+paste("Correlation coefficient for k=9 is:" ,cor(test.df$sought_treatment, standardised.data.knn.pred_9))
+```
+KNN - Regression with k-value(1, 3, 7, 9)
+Performed KNN regression age (numerical) as predictor varible and sought_treatment as output
+variable.
+As we cane see, RMSE value for KNN-9 has the least value with test data.
+IE 7275 Data Mining in Engineering
+
+```{r Naive Bayes} #Naive Bayes
+# Let us consider sought_treatment as the response variable and gender, diagnosed by a medical professional, have mental health disorder, family history, care available, mental health interview, physical health interview as the predictor vaiables.
+library(e1071)
+colnames(data3)[48]
+colnames(data3)[39]
+colnames(data3)[36]
+colnames(data3)[34]
+colnames(data3)[4]
+colnames(data3)[27]
+colnames(data3)[28]
+colnames(data3)[41]
+data3$care_available
+selected.var.naive <- c(4,27,28,34,36,39,41,48) set.seed(1)
+train.index <- sample(c(1:dim(data3)[1]), dim(data3)[1]*0.8) naive.train.df <- data3[train.index, selected.var.naive] naive.test.df <- data3[-train.index, selected.var.naive]
+# run naive bayes
+naive.mental.health <- naiveBayes(sought_treatment ~ ., data = naive.train.df) naive.mental.health
+## predict probabilities
+pred.prob <- predict(naive.mental.health, newdata = naive.test.df, type = "raw") pred.prob
+library(gains)
+gain <- gains(naive.test.df$sought_treatment, pred.prob[,1], groups=100)
+plot(c(0,gain$cume.pct.of.total*sum(naive.test.df$sought_treatment==1))~c(0,gain$cume.obs), xlab="# cases", ylab="Cumulative", main="", type="l")
+lines(c(0,sum(naive.test.df$sought_treatment==1))~c(0, dim(naive.test.df)[1]), lty=2) ```
+```{r Logistic Regression}
+IE 7275 Data Mining in Engineering
+
+#Logistic Regression
+library(fastDummies) library(pROC) library(gains)
+colnames(data3)[2] #tech company
+colnames(data3)[4] #care available
+colnames(data3)[7] #anonymity portected colnames(data3)[15] #previous employers colnames(data3)[34] #family history
+colnames(data3)[35] #mhd past
+colnames(data3)[36] #have_mhd
+colnames(data3)[39] #diagnosed by a medical professional colnames(data3)[41] #sought treatment colnames(data3)[44] #age
+colnames(data3)[48] #gender
+is.factor(data3$anonymity_protected)
+is.factor(data3$care_available)
+is.factor(data3$Have.you.had.a.mental.health.disorder.in.the.past.)
+is.factor(data3$have_mhd)
+is.factor(data3$Have.you.been.diagnosed.with.a.mental.health.condition.by.a.medical.profession al.)
+factor(data3$gender)
+data3.logit <- data3[c(4,7,34,35,36,39,41,48)]
+set.seed(2)
+train.index <- sample(c(1:dim(data3.logit)[1]), dim(data3.logit)[1]*0.8) logit.train.df <- data3.logit[train.index, ]
+logit.test.df <- data3.logit[-train.index, ]
+logit.mental.health <- glm(sought_treatment ~ ., data = logit.train.df, family = "binomial") options(scipen=999)
+summary(logit.mental.health)
+# use predict() with type = "response" to compute predicted probabilities. logit.mental.health.pred <- predict(logit.mental.health, logit.test.df[, -7], type = "response")
+IE 7275 Data Mining in Engineering
+
+# first 5 actual and predicted records
+data.frame(actual = logit.test.df$sought_treatment[1:5], predicted = logit.mental.health.pred[1:5])
+roc(logit.train.df$sought_treatment, logit.mental.health$fitted.values, plot=TRUE, legacy.axes=TRUE, percent=TRUE, xlab="False Positive Percentage", ylab="True Postive Percentage",col="#377eb8", lwd=2, main="ROC Curve")
+#AUC 93.51%
+gain <- gains(logit.test.df$sought_treatment, logit.mental.health.pred, groups=10)
+# plot lift chart plot(c(0,gain$cume.pct.of.total*sum(logit.test.df$sought_treatment))~c(0,gain$cume.obs),
+xlab="# cases", ylab="Cumulative", main="", type="l") lines(c(0,sum(logit.test.df$sought_treatment))~c(0, dim(logit.test.df)[1]), lty=2)
+# compute deciles and plot decile-wise chart
+heights <- gain$mean.resp/mean(logit.test.df$sought_treatment) midpoints <- barplot(heights, names.arg = gain$depth, ylim = c(0,9),
+xlab = "Percentile", ylab = "Mean Response", main = "Decile-wise lift chart")
+# add labels to columns
+text(midpoints, heights+0.5, labels=round(heights, 1), cex = 0.8)
+```
+```{r Regression Tree: rpart package}
+library(rpart) library(rpart.plot)
+#create dummy variables
+colnames(data3)[2] #tech company
+colnames(data3)[4] #care available
+colnames(data3)[7] #anonymity portected colnames(data3)[15] #previous employers colnames(data3)[34] #family history colnames(data3)[35]<-"mhd.past"
+colnames(data3)[36] #have_mhd colnames(data3)[39]<-"diagnosed.by.a.medical.professional" colnames(data3)[41] #sought treatment
+IE 7275 Data Mining in Engineering
+
+colnames(data3)[44] #age
+colnames(data3)[48] #gender
+colnames(data3)[colnames(data3) == "If.you.have.a.mental.health.issue..do.you.feel.that.it.interferes.with.your.work.when.being.treate d.effectively."] <- "interferes.when.treated"
+colnames(data3)[colnames(data3) == "If.you.have.a.mental.health.issue..do.you.feel.that.it.interferes.with.your.work.when.NOT.being .treated.effectively."] <- "interferes.when.not.treated"
+regression.tree.data3 <- dummy_cols(data3, select_columns = c('anonymity_protected','care_available','family_history','mhd.past','have_mhd','diagnosed.by.a.m edical.professional','gender'))
+regression.tree.data3 <- regression.tree.data3[,c(-7,-4,-34,-35,-36,-39,-48)]
+regression.tree.data3$sought_treatment <- data3$sought_treatment regression.tree.data3$interferes.when.treated <- data3$interferes.when.treated regression.tree.data3$interferes.when.not.treated <- data3$interferes.when.not.treated
+set.seed(2)
+train.index <- sample(c(1:dim(regression.tree.data3)[1]), dim(regression.tree.data3)[1]*0.8) reg.tree.train.df <- regression.tree.data3[train.index, ]
+reg.tree.test.df <- regression.tree.data3[-train.index, ]
+mental.health.regression <- rpart::rpart(sought_treatment ~
+anonymity_protected_Y es+anonymity_protected_No+care_available_No+care_available_Y es+` care_available_Not sure`+`family_history_I don't know`+family_history_Yes+family_history_No, data =reg.tree.train.df, method = "anova", control = rpart.control(maxdepth = 3))
+printcp(mental.health.regression)
+summary(mental.health.regression)
+prp(mental.health.regression, type = 1, extra = 1, split.font = 0.1, varlen = -8)
+roc(reg.tree.train.df$sought_treatment, mental.health.regression$where, plot=TRUE, legacy.axes=TRUE, percent=TRUE, xlab="False Positive Percentage", ylab="True Postive Percentage",col="#377eb8", lwd=2, main = "ROC Curve")
+#AUC 71.58
+reg.tree.train.pred <- predict(mental.health.regression, newdata = reg.tree.train.df) RMSE(pred = reg.tree.train.pred, obs = reg.tree.train.df$sought_treatment)
+IE 7275 Data Mining in Engineering
+
+reg.tree.test.pred <- predict(mental.health.regression, newdata = reg.tree.test.df) RMSE(pred = reg.tree.test.pred, obs = reg.tree.test.df$sought_treatment)
+# RMSE is greater for the lower for the validation dataset than the training dataset for Regression trees.
+```
+```{r Random Forest}
+#install.packages('randomForest') library(randomForest)
+## random forest
+random.forest <- randomForest(sought_treatment ~
+anonymity_protected_Y es+anonymity_protected_No+care_available_No+care_available_Y es+f amily_history_Yes+family_history_No, data =reg.tree.train.df, ntree = 500, mtry = 4, nodesize = 5, importance = TRUE)
+## variable importance plot varImpPlot(random.forest, type = 1)
+## confusion matrix
+random.forest.pred <- predict(random.forest, reg.tree.test.df)
+```
+```{r Classfication Tree}
+mental.health.classification <- rpart::rpart(sought_treatment ~ anonymity_protected_Yes+anonymity_protected_No+care_available_No+care_available_Yes+` care_available_Not sure`+`family_history_I don't know`+family_history_Yes+family_history_No, data =reg.tree.train.df, method = "class")
+rpart.plot::rpart.plot(mental.health.classification, type = 4, fallen.leaves = FALSE, extra = 5) ```
+IE 7275 Data Mining in Engineering
+
+```{r Neural Net} library(neuralnet) library(OneR)
+neural.net<- neuralnet(sought_treatment ~
+anonymity_protected_Y es+anonymity_protected_No+care_available_No+care_available_Y es+f amily_history_Yes+family_history_No, data =reg.tree.train.df, hidden = 2, threshold = 0.5, linear.output = T, algorithm = "rprop+",stepmax = 1e7)
+neural.net$result.matrix
+plot(neural.net)
+compute(neural.net, reg.tree.train.df[,-c(3)])
+neural.net.train.pred <- predict(neural.net, newdata = reg.tree.train.df) RMSE(pred = neural.net.train.pred, obs = reg.tree.train.df$sought_treatment)
+neural.net.test.pred <- predict(neural.net, newdata = reg.tree.test.df) RMSE(pred = neural.net.test.pred, obs = reg.tree.test.df$sought_treatment)
+prediction <- round(compute(neural.net, reg.tree.test.df)$net.result) eval_model(prediction, reg.tree.test.df)
+#The RMSE value for the test data is greater than the RMSE value of the training data, as the data was trained on the training dataset.```
