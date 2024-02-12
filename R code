@@ -1,9 +1,37 @@
-```{r} library(readxl) library(dplyr) library(tidyverse)
+
+library(readxl) 
+library(dplyr) 
+library(tidyverse)
+
 # Load Data
-data <- read.csv("mental-heath-in-tech-2016_20161114.csv") head(data)
-```
-```{r Renaming Columns} #Rename Columns
-colnames(data)[1]<-"self_employed" colnames(data)[2]<-"no_of_employees" colnames(data)[3]<-"tech_company" colnames(data)[5]<-"offer_benefits" colnames(data)[6]<-"care_available" colnames(data)[7]<-"wellness_campaign" colnames(data)[8]<-"offer_help" colnames(data)[9]<-"anonymity_protected" colnames(data)[11]<-"mental_health_consequence" colnames(data)[12]<-"phy_health_consequence" colnames(data)[13]<-"discuss_coworkers" colnames(data)[14]<-"discuss_supervisor" colnames(data)[15]<-"mental_vs_physical" colnames(data)[16]<-"obs_consequence" colnames(data)[37]<-"phy_health_interview" colnames(data)[39]<-"mental_health_interview" colnames(data)[46]<-"family_history" colnames(data)[48]<-"have_mhd" colnames(data)[53]<-"sought_treatment" colnames(data)[56]<-"age" colnames(data)[57]<-"gender" colnames(data)[60]<-"country" colnames(data)[63]<-"remote_work"
+data <- read.csv("mental-heath-in-tech-2016_20161114.csv") 
+head(data)
+
+```{r Renaming Columns} 
+#Rename Columns
+colnames(data)[1]<-"self_employed" 
+colnames(data)[2]<-"no_of_employees" 
+colnames(data)[3]<-"tech_company" 
+colnames(data)[5]<-"offer_benefits" 
+colnames(data)[6]<-"care_available" 
+colnames(data)[7]<-"wellness_campaign" 
+colnames(data)[8]<-"offer_help" 
+colnames(data)[9]<-"anonymity_protected" 
+colnames(data)[11]<-"mental_health_consequence" 
+colnames(data)[12]<-"phy_health_consequence" 
+colnames(data)[13]<-"discuss_coworkers" 
+colnames(data)[14]<-"discuss_supervisor" 
+colnames(data)[15]<-"mental_vs_physical" 
+colnames(data)[16]<-"obs_consequence" 
+colnames(data)[37]<-"phy_health_interview" 
+colnames(data)[39]<-"mental_health_interview" 
+colnames(data)[46]<-"family_history" 
+colnames(data)[48]<-"have_mhd" 
+colnames(data)[53]<-"sought_treatment" 
+colnames(data)[56]<-"age" 
+colnames(data)[57]<-"gender" 
+colnames(data)[60]<-"country" 
+colnames(data)[63]<-"remote_work"
 ```
 ```{r}
 #Data Cleaning
